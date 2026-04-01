@@ -12,7 +12,8 @@ const uiElements = {
     healthFill: document.getElementById('health-bar-fill'),
     finalScore: document.getElementById('final-score'),
     leaderboardList: document.getElementById('leaderboard-list'),
-    playerNameInput: document.getElementById('player-name')
+    playerNameInput: document.getElementById('player-name'),
+    playerShapeInput: document.getElementById('player-shape')
 };
 
 // Resize Canvas
@@ -54,6 +55,7 @@ class Player {
         this.lastShot = 0;
         this.shotCooldown = 250; // ms
         this.boostTimer = 0;
+        this.shape = uiElements.playerShapeInput ? uiElements.playerShapeInput.value : 'triangle';
     }
 
     draw(ctx) {
@@ -64,11 +66,18 @@ class Player {
         ctx.shadowBlur = 10;
         ctx.shadowColor = this.color;
 
-        // Draw Spaceship (Triangle)
+        // Draw Spaceship
         ctx.beginPath();
-        ctx.moveTo(0, -this.height / 2);
-        ctx.lineTo(this.width / 2, this.height / 2);
-        ctx.lineTo(-this.width / 2, this.height / 2);
+        if (this.shape === 'circle') {
+            ctx.arc(0, 0, this.width / 2, 0, Math.PI * 2);
+        } else if (this.shape === 'square') {
+            ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
+        } else {
+            // Triangle
+            ctx.moveTo(0, -this.height / 2);
+            ctx.lineTo(this.width / 2, this.height / 2);
+            ctx.lineTo(-this.width / 2, this.height / 2);
+        }
         ctx.closePath();
         ctx.fill();
 

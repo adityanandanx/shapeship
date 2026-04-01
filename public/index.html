@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Galaxy Defender</title>
+    <title>Shapeship</title>
     <meta name="description" content="A fast-paced, glowing space shooter built on HTML5 Canvas. Survive as long as you can and dominate the leaderboard!">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -31,9 +31,14 @@
         </div>
 
         <div id="start-screen" class="screen">
-            <h1>Neon Galaxy<br>Defender</h1>
+            <h1>Shapeship</h1>
             <p>Use [W,A,S,D] or Arrows to Move. [Space] to Shoot.<br>[E] or [1,2,3] to change weapons.</p>
             <input type="text" id="player-name" placeholder="Enter Pilot Name" maxlength="10">
+            <select id="player-shape">
+                <option value="triangle">Triangle</option>
+                <option value="circle">Circle</option>
+                <option value="square">Square</option>
+            </select>
             <button id="start-btn" class="neon-btn">INITIALIZE</button>
             <button id="view-leaderboard-btn" class="neon-btn sec">LEADERBOARD</button>
         </div>
