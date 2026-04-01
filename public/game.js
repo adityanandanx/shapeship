@@ -186,7 +186,7 @@ class Projectile {
 }
 
 class Enemy {
-    constructor(type) {
+    constructor(type, difficultyMultiplier = 1.0) {
         this.type = type; // 0 = Basic, 1 = Zigzag, 2 = Tank
         this.radius = type === 2 ? 25 : 15;
         this.x = randomRange(this.radius, canvas.width - this.radius);
@@ -195,21 +195,21 @@ class Enemy {
         this.markedForDeletion = false;
 
         if (type === 0) {
-            this.hp = 1;
-            this.speed = randomRange(100, 200);
+            this.hp = Math.ceil(1 * difficultyMultiplier);
+            this.speed = randomRange(100, 200) * (1 + (difficultyMultiplier - 1) * 0.5);
             this.color = '#ff1818';
             this.score = 10;
         } else if (type === 1) {
-            this.hp = 2;
-            this.speed = 150;
+            this.hp = Math.ceil(2 * difficultyMultiplier);
+            this.speed = 150 * (1 + (difficultyMultiplier - 1) * 0.5);
             this.color = '#ff00ea';
             this.score = 20;
             this.amplitude = randomRange(30, 80);
-            this.frequency = randomRange(2, 5);
+            this.frequency = randomRange(2, 5) * (1 + (difficultyMultiplier - 1) * 0.2);
             this.startX = this.x;
         } else if (type === 2) {
-            this.hp = 5;
-            this.speed = 60;
+            this.hp = Math.ceil(5 * difficultyMultiplier);
+            this.speed = 60 * (1 + (difficultyMultiplier - 1) * 0.5);
             this.color = '#ffa500';
             this.score = 50;
         }
@@ -380,6 +380,7 @@ class Game {
         this.state = 'MENU'; // MENU, PLAYING, GAMEOVER
         this.enemySpawnTimer = 0;
         this.enemySpawnInterval = 1.0; 
+        this.difficultyMultiplier = 1.0;
         
         this.lastTime = performance.now();
         requestAnimationFrame(t => this.loop(t));
@@ -404,6 +405,7 @@ class Game {
         this.powerups = [];
         this.score = 0;
         this.enemySpawnInterval = 1.5;
+        this.difficultyMultiplier = 1.0;
         this.state = 'PLAYING';
         
         uiElements.score.innerText = this.score;
@@ -433,19 +435,22 @@ class Game {
 
         if (this.state !== 'PLAYING') return;
 
+        this.difficultyMultiplier += 0.02 * dt; // Gradually increase difficulty over time
+
         this.player.update(dt);
 
         // Spawn Enemies
         this.enemySpawnTimer += dt;
         if (this.enemySpawnTimer >= this.enemySpawnInterval) {
             this.enemySpawnTimer = 0;
-            this.enemySpawnInterval = Math.max(0.3, this.enemySpawnInterval - 0.01);
+            // Spawn interval decreases more aggressively as difficulty multiplies
+            this.enemySpawnInterval = Math.max(0.2, this.enemySpawnInterval - 0.01 * this.difficultyMultiplier);
             
             let type = 0;
             const r = Math.random();
             if (r > 0.8) type = 2;
             else if (r > 0.5) type = 1;
-            this.enemies.push(new Enemy(type));
+            this.enemies.push(new Enemy(type, this.difficultyMultiplier));
         }
 
         this.projectiles.forEach(p => p.update(dt));
