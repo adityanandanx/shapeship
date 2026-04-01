@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Galaxy Defender</title>
+    <meta name="description" content="A fast-paced, glowing space shooter built on HTML5 Canvas. Survive as long as you can and dominate the leaderboard!">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- UI Overlays -->
+        <div id="hud" class="overlay hidden">
+            <div id="hud-top">
+                <div class="score-container">Score: <span id="score">0</span></div>
+                <div class="health-container">
+                    <div id="health-bar-fill"></div>
+                </div>
+            </div>
+            <div id="hud-bottom">
+                <div class="weapons">
+                    <div id="wpn-laser" class="weapon active">LSR</div>
+                    <div id="wpn-dual" class="weapon">DUL</div>
+                    <div id="wpn-plasma" class="weapon">PLS</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="start-screen" class="screen">
+            <h1>Neon Galaxy<br>Defender</h1>
+            <p>Use [W,A,S,D] or Arrows to Move. [Space] to Shoot.<br>[E] or [1,2,3] to change weapons.</p>
+            <input type="text" id="player-name" placeholder="Enter Pilot Name" maxlength="10">
+            <button id="start-btn" class="neon-btn">INITIALIZE</button>
+            <button id="view-leaderboard-btn" class="neon-btn sec">LEADERBOARD</button>
+        </div>
+
+        <div id="game-over-screen" class="screen hidden">
+            <h1>GAME OVER</h1>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button id="restart-btn" class="neon-btn">PLAY AGAIN</button>
+            <button id="go-leaderboard-btn" class="neon-btn sec">LEADERBOARD</button>
+        </div>
+
+        <div id="pause-screen" class="screen hidden">
+            <h1>PAUSED</h1>
+            <p>Press [Escape] to Resume</p>
+            <button id="resume-btn" class="neon-btn">RESUME</button>
+            <button id="pause-leaderboard-btn" class="neon-btn sec">LEADERBOARD</button>
+        </div>
+
+        <div id="leaderboard-screen" class="screen hidden">
+            <h2>TOP 10 PILOTS</h2>
+            <ul id="leaderboard-list">
+                <!-- Scores injected by JS -->
+            </ul>
+            <button id="back-btn" class="neon-btn">BACK</button>
+        </div>
+    </div>
+
+    <!-- Script loading -->
+    <script src="game.js"></script>
+</body>
+</html>
