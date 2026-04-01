@@ -6,6 +6,7 @@ const uiElements = {
     start: document.getElementById('start-screen'),
     gameOver: document.getElementById('game-over-screen'),
     leaderboard: document.getElementById('leaderboard-screen'),
+    pause: document.getElementById('pause-screen'),
     hud: document.getElementById('hud'),
     score: document.getElementById('score'),
     healthFill: document.getElementById('health-bar-fill'),
@@ -23,7 +24,16 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 const keys = {};
-window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if (e.code === 'Escape') {
+        if (game.state === 'PLAYING') {
+            game.pause();
+        } else if (game.state === 'PAUSED') {
+            game.resume();
+        }
+    }
+});
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 // Utility
@@ -43,6 +53,7 @@ class Player {
         this.weaponLevel = 0; // 0: Laser, 1: Dual, 2: Plasma
         this.lastShot = 0;
         this.shotCooldown = 250; // ms
+        this.boostTimer = 0;
     }
 
     draw(ctx) {
@@ -68,13 +79,31 @@ class Player {
         ctx.fill();
         
         ctx.restore();
+
+        if (this.boostTimer > 0) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.strokeStyle = '#ffe100';
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#ffe100';
+            ctx.beginPath();
+            ctx.arc(0, 0, this.width, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
     }
 
     update(dt) {
-        if ((keys['KeyA'] || keys['ArrowLeft']) && this.x > this.width / 2) this.x -= this.speed * dt;
-        if ((keys['KeyD'] || keys['ArrowRight']) && this.x < canvas.width - this.width / 2) this.x += this.speed * dt;
-        if ((keys['KeyW'] || keys['ArrowUp']) && this.y > this.height / 2) this.y -= this.speed * dt;
-        if ((keys['KeyS'] || keys['ArrowDown']) && this.y < canvas.height - this.height / 2) this.y += this.speed * dt;
+        if (this.boostTimer > 0) {
+            this.boostTimer -= dt;
+        }
+        let currentSpeed = this.boostTimer > 0 ? this.speed * 2 : this.speed;
+
+        if ((keys['KeyA'] || keys['ArrowLeft']) && this.x > this.width / 2) this.x -= currentSpeed * dt;
+        if ((keys['KeyD'] || keys['ArrowRight']) && this.x < canvas.width - this.width / 2) this.x += currentSpeed * dt;
+        if ((keys['KeyW'] || keys['ArrowUp']) && this.y > this.height / 2) this.y -= currentSpeed * dt;
+        if ((keys['KeyS'] || keys['ArrowDown']) && this.y < canvas.height - this.height / 2) this.y += currentSpeed * dt;
 
         // Weapon switching
         if (keys['Digit1']) this.setWeapon(0);
@@ -292,11 +321,11 @@ class PowerUp {
     constructor(x, y, type) {
         this.x = x;
         this.y = y;
-        // 0: Heal, 1: Weapon Upgrade
+        // 0: Heal, 1: Weapon Upgrade, 2: Boost
         this.type = type;
         this.radius = 12;
         this.vy = 80;
-        this.color = type === 0 ? '#39ff14' : '#00f3ff';
+        this.color = type === 0 ? '#39ff14' : type === 1 ? '#00f3ff' : '#ffe100';
         this.markedForDeletion = false;
         this.angle = 0;
     }
@@ -323,7 +352,7 @@ class PowerUp {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.rotate(-this.angle); // keep text upright
-        ctx.fillText(this.type === 0 ? 'H' : 'W', 0, 0);
+        ctx.fillText(this.type === 0 ? 'H' : this.type === 1 ? 'W' : 'B', 0, 0);
         ctx.restore();
     }
 }
@@ -345,6 +374,17 @@ class Game {
         
         this.lastTime = performance.now();
         requestAnimationFrame(t => this.loop(t));
+    }
+
+    pause() {
+        this.state = 'PAUSED';
+        uiElements.pause.classList.remove('hidden');
+    }
+
+    resume() {
+        this.state = 'PLAYING';
+        this.lastTime = performance.now();
+        uiElements.pause.classList.add('hidden');
     }
 
     start() {
@@ -446,10 +486,10 @@ class Game {
                         uiElements.score.innerText = this.score;
                         this.createExplosion(e.x, e.y, e.color, 20);
 
-                        // Drop powerup chance (10%)
-                        if (Math.random() < 0.1) {
-                            this.powerups.push(new PowerUp(e.x, e.y, Math.random() < 0.5 ? 0 : 1));
-                        }
+                        // Drop powerup from every destroyed enemy
+                        let rnd = Math.random();
+                        let pType = rnd < 0.4 ? 0 : rnd < 0.8 ? 1 : 2;
+                        this.powerups.push(new PowerUp(e.x, e.y, pType));
                     }
                 }
             });
@@ -464,7 +504,12 @@ class Game {
             if (dist < this.player.width/2 + e.radius) {
                 e.markedForDeletion = true;
                 this.createExplosion(e.x, e.y, e.color, 20);
-                this.takeDamage(20);
+                if (this.player.boostTimer > 0) {
+                    this.score += e.score;
+                    uiElements.score.innerText = this.score;
+                } else {
+                    this.takeDamage(20);
+                }
             }
         });
 
@@ -480,6 +525,8 @@ class Game {
                     this.updateHealthBar();
                 } else if (p.type === 1) {
                     this.player.setWeapon((this.player.weaponLevel + 1) % 3);
+                } else if (p.type === 2) {
+                    this.player.boostTimer = 5.0; // 5 seconds of boost
                 }
                 this.createExplosion(p.x, p.y, p.color, 15);
             }
@@ -570,7 +617,10 @@ document.getElementById('start-btn').addEventListener('click', () => game.start(
 document.getElementById('restart-btn').addEventListener('click', () => game.start());
 document.getElementById('view-leaderboard-btn').addEventListener('click', () => game.showLeaderboard());
 document.getElementById('go-leaderboard-btn').addEventListener('click', () => game.showLeaderboard());
+document.getElementById('resume-btn').addEventListener('click', () => game.resume());
+document.getElementById('pause-leaderboard-btn').addEventListener('click', () => game.showLeaderboard());
 document.getElementById('back-btn').addEventListener('click', () => {
     uiElements.leaderboard.classList.add('hidden');
+    uiElements.pause.classList.add('hidden');
     uiElements.start.classList.remove('hidden');
 });
